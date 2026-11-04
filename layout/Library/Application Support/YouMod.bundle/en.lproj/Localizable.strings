@@ -341,6 +341,9 @@
 "COPY_COMMENT_DEBUG" = "Copy comment debug info";
 "COPY_COMMENT_DEBUG_DESC" = "Copies what YouMod read from the last few comments.";
 "SAVE" = "Save";
+"COMMENTS_BUTTON" = "Comments toggle";
+"COMMENTS_SHOW_ALL" = "Showing all comments";
+"COMMENTS_SHOW_MINE" = "Showing only my comments";
 "LOCK_SPEED" = "Lock speed";
 "LOCK_SPEED_DESC" = "Locks at adjusted speed by swiping down.";
 "SEEK_ON_OVERLAY" = "Seek on overlay";
