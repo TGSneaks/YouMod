@@ -196,6 +196,8 @@
 #define PauseTwoFingers @"YouModPauseTwoFingers"
 #define HideCommentsSection @"YouModHideCommentsSection"
 #define HideCommentsPreview @"YouModHideCommentsPreview"
+#define OnlyMyComments @"YouModOnlyMyComments"
+#define MyCommentHandle @"YouModMyCommentHandle"
 #define LockSpeed @"YouModLockSpeed"
 #define SeekOnOverlay @"YouModSeekOnOverlay"
 #define AutoDRCAudioIndex @"YouModAutoDRCAudioIndex"
