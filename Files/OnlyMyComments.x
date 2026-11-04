@@ -8,10 +8,6 @@ static const NSUInteger OMCDebugTextLimit = 300;
 
 static NSMutableArray<NSString *> *omcDebugEntries;
 
-static BOOL OMCFilterActive(void) {
-    return IS_ENABLED(OnlyMyComments) && !IS_ENABLED(ShowAllComments);
-}
-
 static NSString *OMCHandle(void) {
     NSString *handle = [[NSUserDefaults standardUserDefaults] stringForKey:MyCommentHandle];
     handle = [handle stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
@@ -75,7 +71,7 @@ static void OMCFilterCell(UIView *cell, NSInteger attempt) {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.15 * (attempt + 1) * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         UIView *strongCell = weakCell;
         NSString *handle = OMCHandle();
-        if (!strongCell || !handle || !OMCFilterActive()) return;
+        if (!strongCell || !handle || !IS_ENABLED(OnlyMyComments)) return;
         NSString *text = OMCCellText(strongCell);
         if (text.length == 0) {
             if (attempt + 1 < OMCMaxAttempts) OMCFilterCell(strongCell, attempt + 1);
@@ -111,33 +107,8 @@ void YMCopyCommentDebugInfo(void) {
 %hook _ASDisplayView
 - (void)didMoveToWindow {
     %orig;
-    if (self.window && [self.accessibilityIdentifier isEqualToString:@"id.ui.comment_cell"] && OMCFilterActive()) {
+    if (self.window && [self.accessibilityIdentifier isEqualToString:@"id.ui.comment_cell"] && IS_ENABLED(OnlyMyComments)) {
         OMCFilterCell(self, 0);
     }
 }
 %end
-
-%ctor {
-    %init;
-
-    YMOverlayButtonSpec *toggle = [[YMOverlayButtonSpec alloc] init];
-    toggle.identifier = @"comments.toggle";
-    toggle.symbolName = @"text.bubble.fill";
-    toggle.settingsSymbolName = @"text.bubble.fill";
-    toggle.displayName = LOC(@"COMMENTS_BUTTON");
-    toggle.tintColor = [UIColor whiteColor];
-    toggle.sortOrder = 90;
-    toggle.isVisible = ^BOOL(YTPlayerViewController *player) {
-        return (IS_ENABLED(OnlyMyComments) || IS_ENABLED(HideCommentsSection)) && YMIsOverlayButtonEnabled(@"comments.toggle");
-    };
-    toggle.tintProvider = ^UIColor *(YTPlayerViewController *player) {
-        return IS_ENABLED(ShowAllComments) ? [UIColor whiteColor] : [UIColor grayColor];
-    };
-    toggle.onTap = ^(YTPlayerViewController *player, UIButton *button) {
-        BOOL showAll = !IS_ENABLED(ShowAllComments);
-        [[NSUserDefaults standardUserDefaults] setBool:showAll forKey:ShowAllComments];
-        button.tintColor = showAll ? [UIColor whiteColor] : [UIColor grayColor];
-        [SBSkipNotificationView showSuccessInView:sbGetNotificationParent() message:LOC(showAll ? @"COMMENTS_SHOW_ALL" : @"COMMENTS_SHOW_MINE") duration:2.0];
-    };
-    YMRegisterOverlayButton(toggle);
-}

@@ -1826,10 +1826,9 @@ static NSString * const kYMOverlayButtonIDs[] = {
     @"quality.video",
     @"share.video",
     @"loop.video",
-    @"caption.video",
-    @"comments.toggle"
+    @"caption.video"
 };
-static const NSInteger kYMOverlayButtonCount = 9;
+static const NSInteger kYMOverlayButtonCount = 8;
 
 @interface YMOverlayButtonOrderViewController : UIViewController <UITableViewDelegate, UITableViewDataSource>
 - (UITableView *)tableView;
@@ -1856,7 +1855,6 @@ static const void *kYMOverlaySavedScrollEdgeAppearanceKey = &kYMOverlaySavedScro
 - (void)setInitialSnapshot:(NSArray *)snap { objc_setAssociatedObject(self, kYMOverlayButtonSnapshotKey, snap, OBJC_ASSOCIATION_RETAIN_NONATOMIC); }
 
 - (NSString *)localizedNameForButtonID:(NSString *)buttonID {
-    if ([buttonID isEqualToString:@"comments.toggle"]) return LOC(@"COMMENTS_BUTTON");
     if ([buttonID isEqualToString:@"sponsorblock.toggle"]) return LOC(@"SPONSORBLOCK_BUTTON");
     if ([buttonID isEqualToString:@"download.video"]) return LOC(@"DOWNLOAD_BUTTON");
     if ([buttonID isEqualToString:@"mute.video"]) return LOC(@"MUTE_BUTTON");
@@ -1883,7 +1881,6 @@ static const void *kYMOverlaySavedScrollEdgeAppearanceKey = &kYMOverlaySavedScro
     }
 
     NSString *symbol = @"circle";
-    if ([buttonID isEqualToString:@"comments.toggle"]) symbol = @"text.bubble.fill";
     if ([buttonID isEqualToString:@"sponsorblock.toggle"]) symbol = @"shield.fill";
     else if ([buttonID isEqualToString:@"download.video"]) symbol = @"arrow.down.circle";
     else if ([buttonID isEqualToString:@"mute.video"]) symbol = @"speaker.wave.2";

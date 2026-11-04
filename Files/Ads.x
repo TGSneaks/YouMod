@@ -86,7 +86,7 @@ static NSMutableArray <YTIItemSectionRenderer *> *filteredArray(NSArray <YTIItem
     const BOOL hideCommuGuide = IS_ENABLED(HideCommuGuide);
     const BOOL hideGenMusic = IS_ENABLED(HideGenMusicShelf);
     const BOOL hideSurveys = IS_ENABLED(HideSurveys);
-    const BOOL hideComments = IS_ENABLED(HideCommentsSection) && !IS_ENABLED(OnlyMyComments) && !IS_ENABLED(ShowAllComments);
+    const BOOL hideComments = IS_ENABLED(HideCommentsSection) && !IS_ENABLED(OnlyMyComments);
 
     NSMutableArray <YTIItemSectionRenderer *> *newArray = [array mutableCopy];
     NSIndexSet *removeIndexes = [newArray indexesOfObjectsPassingTest:^BOOL(YTIItemSectionRenderer *sectionRenderer, NSUInteger idx, BOOL *stop) {
@@ -334,7 +334,7 @@ static NSMutableArray <YTIItemSectionRenderer *> *filteredArray(NSArray <YTIItem
     %orig;
     NSString *iden = self.accessibilityIdentifier;
     if ([iden isEqualToString:@"eml.expandable_metadata.vpp"]) [self removeFromSuperview];
-    if ((IS_ENABLED(HideCommentsPreview) || IS_ENABLED(OnlyMyComments)) && !IS_ENABLED(ShowAllComments) && [iden isEqualToString:@"id.ui.comments_entry_point_teaser"]) [self removeFromSuperview];
+    if ((IS_ENABLED(HideCommentsPreview) || IS_ENABLED(OnlyMyComments)) && [iden isEqualToString:@"id.ui.comments_entry_point_teaser"]) [self removeFromSuperview];
     if ([self.accessibilityLabel containsString:@"Premium"] && [self._viewControllerForAncestor isKindOfClass:%c(YTPageHeaderViewController)]) {
         [self removeFromSuperview];
     }

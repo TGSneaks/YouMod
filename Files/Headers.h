@@ -198,7 +198,6 @@
 #define HideCommentsPreview @"YouModHideCommentsPreview"
 #define OnlyMyComments @"YouModOnlyMyComments"
 #define MyCommentHandle @"YouModMyCommentHandle"
-#define ShowAllComments @"YouModShowAllComments"
 #define LockSpeed @"YouModLockSpeed"
 #define SeekOnOverlay @"YouModSeekOnOverlay"
 #define AutoDRCAudioIndex @"YouModAutoDRCAudioIndex"
