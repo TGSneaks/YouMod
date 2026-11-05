@@ -334,6 +334,12 @@
 "HIDE_COMMENTS_SECTION_DESC" = "Completely removes the entire comments section.";
 "HIDE_COMMENTS_PREVIEW" = "Hide preview comments";
 "HIDE_COMMENTS_PREVIEW_DESC" = "Removes the preview box for the top comment while keeping the full section expandable.";
+"COMMENT_TIMESTAMPS" = "My comment timestamps";
+"COMMENT_TIMESTAMPS_DESC" = "Reads the timestamps from your own comment in the background and adds a bookmark button to the player. Comments stay hidden.";
+"COPY_TIMESTAMP_DEBUG" = "Copy timestamp debug info";
+"COPY_TIMESTAMP_DEBUG_DESC" = "Copies what happened on the last video read.";
+"TIMESTAMPS_BUTTON" = "My timestamps";
+"MY_TIMESTAMPS" = "My timestamps";
 "LOCK_SPEED" = "Lock speed";
 "LOCK_SPEED_DESC" = "Locks at adjusted speed by swiping down.";
 "SEEK_ON_OVERLAY" = "Seek on overlay";

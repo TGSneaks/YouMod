@@ -32,6 +32,7 @@ static const NSInteger TweakSection = 'ytmo';
 - (instancetype)requireAnyCondition;
 @end
 extern void YMPushSubSettings(NSString *title, NSArray<YMSettingsItem *> *items, id settingsVC, id parentResponder);
+extern void YMCopyTimestampDebugInfo(void);
 extern YMSettingsItem *YMToggle(NSString *title, NSString *subtitle, NSString *key);
 extern YMSettingsItem *YMSlider(NSString *title, NSString *subtitle, NSString *key, float min, float max, float step, float defaultValue);
 extern YMSettingsItem *YMPicker(NSString *title, NSString *subtitle, NSString *key, NSArray<NSString *> *options, NSInteger defaultValue);
@@ -320,6 +321,11 @@ static NSString *GetCacheSize() { // YTLite - @dayanch96
             YMToggle(YMLOC(@"HIDE_RELATED_VIDEOS"), YMLOC(@"HIDE_RELATED_VIDEOS_DESC"), HideRelatedVideos),
             YMToggle(YMLOC(@"HIDE_COMMENTS_SECTION"), YMLOC(@"HIDE_COMMENTS_SECTION_DESC"), HideCommentsSection),
             YMToggle(YMLOC(@"HIDE_COMMENTS_PREVIEW"), YMLOC(@"HIDE_COMMENTS_PREVIEW_DESC"), HideCommentsPreview),
+            YMToggle(YMLOC(@"COMMENT_TIMESTAMPS"), YMLOC(@"COMMENT_TIMESTAMPS_DESC"), CommentTimestamps),
+            [YMAction(YMLOC(@"COPY_TIMESTAMP_DEBUG"), YMLOC(@"COPY_TIMESTAMP_DEBUG_DESC"), ^(UIViewController *vc) {
+                (void)vc;
+                YMCopyTimestampDebugInfo();
+            }) visibleWhenBoolKey:CommentTimestamps],
             YMPicker(YMLOC(@"DRC_AUDIO_OPTIONS"), YMLOC(@"DRC_AUDIO_OPTIONS_DESC"), AutoDRCAudioIndex, (@[YMLOC(@"DEFAULT"), YMLOC(@"ENABLED"), YMLOC(@"DISABLED")]), 0),
             YMToggle(YMLOC(@"REMOVE_VIDEO_LIKE_BUTTON"), YMLOC(@"REMOVE_VIDEO_LIKE_BUTTON_DESC"), RemoveVideoLikeButton),
             YMToggle(YMLOC(@"REMOVE_VIDEO_DISLIKE_BUTTON"), YMLOC(@"REMOVE_VIDEO_DISLIKE_BUTTON_DESC"), RemoveVideoDislikeButton),
