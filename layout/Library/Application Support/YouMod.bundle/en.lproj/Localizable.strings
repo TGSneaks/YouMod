@@ -335,12 +335,7 @@
 "HIDE_COMMENTS_PREVIEW" = "Hide preview comments";
 "HIDE_COMMENTS_PREVIEW_DESC" = "Removes the preview box for the top comment while keeping the full section expandable.";
 "ONLY_MY_COMMENTS" = "Show only my comments";
-"ONLY_MY_COMMENTS_DESC" = "Keeps the comments section but hides every comment not written by your handle. Overrides Hide comments section.";
-"MY_COMMENT_HANDLE" = "My YouTube handle";
-"MY_COMMENT_HANDLE_DESC" = "The @handle shown on your comments.";
-"COPY_COMMENT_DEBUG" = "Copy comment debug info";
-"COPY_COMMENT_DEBUG_DESC" = "Copies what YouMod read from the last few comments.";
-"SAVE" = "Save";
+"ONLY_MY_COMMENTS_DESC" = "Keeps the comments section but shows only the first comment, where YouTube puts yours. Overrides Hide comments section.";
 "LOCK_SPEED" = "Lock speed";
 "LOCK_SPEED_DESC" = "Locks at adjusted speed by swiping down.";
 "SEEK_ON_OVERLAY" = "Seek on overlay";

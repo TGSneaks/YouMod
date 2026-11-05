@@ -43,8 +43,6 @@ extern YMSettingsItem *YMImageSegment(NSString *title, NSString *key, NSArray<UI
 extern void YMPushTabOrder(id settingsVC, id parentResponder);
 extern void YMPushOverlayButtonOrder(id settingsVC, id parentResponder);
 extern void YMRegisterSettingsGroup(NSString *title, NSArray<YMSettingsItem *> *items);
-extern void YMPromptForCommentHandle(UIViewController *presenter);
-extern void YMCopyCommentDebugInfo(void);
 extern void YMPushSettingsSearch(id settingsVC, id parentResponder);
 
 @interface YTSettingsSectionItemManager (YouMod)
@@ -323,13 +321,6 @@ static NSString *GetCacheSize() { // YTLite - @dayanch96
             YMToggle(YMLOC(@"HIDE_COMMENTS_SECTION"), YMLOC(@"HIDE_COMMENTS_SECTION_DESC"), HideCommentsSection),
             YMToggle(YMLOC(@"HIDE_COMMENTS_PREVIEW"), YMLOC(@"HIDE_COMMENTS_PREVIEW_DESC"), HideCommentsPreview),
             YMToggle(YMLOC(@"ONLY_MY_COMMENTS"), YMLOC(@"ONLY_MY_COMMENTS_DESC"), OnlyMyComments),
-            [YMAction(YMLOC(@"MY_COMMENT_HANDLE"), YMLOC(@"MY_COMMENT_HANDLE_DESC"), ^(UIViewController *vc) {
-                YMPromptForCommentHandle(vc ?: settingsViewController);
-            }) visibleWhenBoolKey:OnlyMyComments],
-            [YMAction(YMLOC(@"COPY_COMMENT_DEBUG"), YMLOC(@"COPY_COMMENT_DEBUG_DESC"), ^(UIViewController *vc) {
-                (void)vc;
-                YMCopyCommentDebugInfo();
-            }) visibleWhenBoolKey:OnlyMyComments],
             YMPicker(YMLOC(@"DRC_AUDIO_OPTIONS"), YMLOC(@"DRC_AUDIO_OPTIONS_DESC"), AutoDRCAudioIndex, (@[YMLOC(@"DEFAULT"), YMLOC(@"ENABLED"), YMLOC(@"DISABLED")]), 0),
             YMToggle(YMLOC(@"REMOVE_VIDEO_LIKE_BUTTON"), YMLOC(@"REMOVE_VIDEO_LIKE_BUTTON_DESC"), RemoveVideoLikeButton),
             YMToggle(YMLOC(@"REMOVE_VIDEO_DISLIKE_BUTTON"), YMLOC(@"REMOVE_VIDEO_DISLIKE_BUTTON_DESC"), RemoveVideoDislikeButton),
