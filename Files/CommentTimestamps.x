@@ -11,6 +11,7 @@ static NSString *const YMCTCommentPanelID = @"comment-item-section";
 static const NSInteger YMCTMaxAuthWaits = 4;
 static const NSTimeInterval YMCTAuthWaitDelay = 3.0;
 static const NSUInteger YMCTDebugAuthorLimit = 3;
+static const NSUInteger YMCTDebugTextLimit = 160;
 
 @interface YMCommentTimestamp : NSObject
 @property (nonatomic, assign) NSInteger seconds;
@@ -18,6 +19,11 @@ static const NSUInteger YMCTDebugAuthorLimit = 3;
 @end
 
 @implementation YMCommentTimestamp
+@end
+
+@interface YMTimestampListViewController : UITableViewController
+@property (nonatomic, copy) NSArray<YMCommentTimestamp *> *stamps;
+@property (nonatomic, copy) void (^onSelect)(YMCommentTimestamp *stamp);
 @end
 
 static NSMutableDictionary<NSString *, NSArray<YMCommentTimestamp *> *> *ymctCache;
@@ -44,14 +50,25 @@ static NSInteger YMCTGroupValue(NSTextCheckingResult *match, NSUInteger group, N
     return range.location == NSNotFound ? 0 : [[text substringWithRange:range] integerValue];
 }
 
-// A label runs from the end of its timestamp to the next timestamp or the end of the line.
-static NSString *YMCTLabel(NSString *text, NSUInteger start, NSUInteger limit) {
-    NSString *tail = [text substringWithRange:NSMakeRange(start, limit - start)];
-    NSRange lineEnd = [tail rangeOfCharacterFromSet:[NSCharacterSet newlineCharacterSet]];
-    if (lineEnd.location != NSNotFound) tail = [tail substringToIndex:lineEnd.location];
+static NSString *YMCTTrimmed(NSString *text) {
     NSMutableCharacterSet *edges = [NSMutableCharacterSet whitespaceAndNewlineCharacterSet];
     [edges addCharactersInString:@"-–—:|,"];
-    return [tail stringByTrimmingCharactersInSet:edges];
+    return [text stringByTrimmingCharactersInSet:edges];
+}
+
+static NSString *YMCTSlice(NSString *text, NSUInteger start, NSUInteger end) {
+    return end > start ? YMCTTrimmed([text substringWithRange:NSMakeRange(start, end - start)]) : @"";
+}
+
+// A note can sit after its timestamp, before it on the same line, or alone on the line below.
+static NSString *YMCTLabel(NSString *text, NSRange stamp, NSUInteger previousEnd, NSUInteger nextStart) {
+    NSRange line = [text lineRangeForRange:NSMakeRange(stamp.location, 0)];
+    NSString *after = YMCTSlice(text, NSMaxRange(stamp), MIN(NSMaxRange(line), nextStart));
+    if (after.length > 0) return after;
+    NSString *before = YMCTSlice(text, MAX(line.location, previousEnd), stamp.location);
+    if (before.length > 0) return before;
+    NSString *below = YMCTSlice(text, NSMaxRange(line), nextStart);
+    return [below componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]].firstObject ?: @"";
 }
 
 static NSArray<YMCommentTimestamp *> *YMCTParse(NSString *text) {
@@ -68,8 +85,9 @@ static NSArray<YMCommentTimestamp *> *YMCTParse(NSString *text) {
         if (seconds >= 60) continue;
         YMCommentTimestamp *stamp = [YMCommentTimestamp new];
         stamp.seconds = YMCTGroupValue(match, 1, text) * 3600 + YMCTGroupValue(match, 2, text) * 60 + seconds;
-        NSUInteger limit = index + 1 < matches.count ? matches[index + 1].range.location : text.length;
-        stamp.label = YMCTLabel(text, NSMaxRange(match.range), limit);
+        NSUInteger previousEnd = index > 0 ? NSMaxRange(matches[index - 1].range) : 0;
+        NSUInteger nextStart = index + 1 < matches.count ? matches[index + 1].range.location : text.length;
+        stamp.label = YMCTLabel(text, match.range, previousEnd, nextStart);
         [stamps addObject:stamp];
     }
     return stamps;
@@ -148,6 +166,7 @@ static void YMCTReadComments(NSString *videoID, NSString *token, NSString *prefi
         NSMutableArray<YMCommentTimestamp *> *stamps = [NSMutableArray array];
         NSMutableArray<NSString *> *authors = [NSMutableArray array];
         NSInteger mine = 0;
+        NSString *sample = @"";
         for (NSDictionary *comment in comments) {
             BOOL isMine = [comment[@"author"][@"isCurrentUser"] boolValue];
             if (authors.count < YMCTDebugAuthorLimit) {
@@ -156,10 +175,12 @@ static void YMCTReadComments(NSString *videoID, NSString *token, NSString *prefi
             if (!isMine) continue;
             mine++;
             NSString *text = comment[@"properties"][@"content"][@"content"];
-            if ([text isKindOfClass:[NSString class]]) [stamps addObjectsFromArray:YMCTParse(text)];
+            if (![text isKindOfClass:[NSString class]]) continue;
+            [stamps addObjectsFromArray:YMCTParse(text)];
+            if (sample.length == 0) sample = [text substringToIndex:MIN(text.length, YMCTDebugTextLimit)];
         }
         NSArray<YMCommentTimestamp *> *unique = YMCTSortedUnique(stamps);
-        NSString *debug = [NSString stringWithFormat:@"%@ comments_http=%ld comments=%lu mine=%ld timestamps=%lu first=%@", prefix, (long)status, (unsigned long)comments.count, (long)mine, (unsigned long)unique.count, [authors componentsJoinedByString:@", "]];
+        NSString *debug = [NSString stringWithFormat:@"%@ comments_http=%ld comments=%lu mine=%ld timestamps=%lu first=%@ sample=%@", prefix, (long)status, (unsigned long)comments.count, (long)mine, (unsigned long)unique.count, [authors componentsJoinedByString:@", "], sample];
         YMCTFinish(videoID, debug, status == 200 ? unique : nil);
     });
 }
@@ -196,25 +217,71 @@ static NSArray<YMCommentTimestamp *> *YMCTStampsForPlayer(YTPlayerViewController
     return videoID ? ymctCache[videoID] : nil;
 }
 
+@implementation YMTimestampListViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.title = LOC(@"MY_TIMESTAMPS");
+    self.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
+    self.navigationController.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemClose target:self action:@selector(closeList)];
+    self.tableView.rowHeight = UITableViewAutomaticDimension;
+    self.tableView.estimatedRowHeight = 52;
+}
+
+- (void)closeList {
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    return self.stamps.count;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"stamp"] ?: [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"stamp"];
+    YMCommentTimestamp *stamp = self.stamps[indexPath.row];
+    UIFont *font = [UIFont systemFontOfSize:16];
+    NSMutableAttributedString *text = [[NSMutableAttributedString alloc] initWithString:YMCTFormatTime(stamp.seconds) attributes:@{
+        NSFontAttributeName: [UIFont monospacedDigitSystemFontOfSize:16 weight:UIFontWeightSemibold],
+        NSForegroundColorAttributeName: [UIColor systemBlueColor]
+    }];
+    if (stamp.label.length > 0) {
+        NSString *note = [@"   " stringByAppendingString:stamp.label];
+        [text appendAttributedString:[[NSAttributedString alloc] initWithString:note attributes:@{
+            NSFontAttributeName: font,
+            NSForegroundColorAttributeName: [UIColor labelColor]
+        }]];
+    }
+    cell.textLabel.attributedText = text;
+    cell.textLabel.numberOfLines = 0;
+    return cell;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (self.onSelect) self.onSelect(self.stamps[indexPath.row]);
+    [self closeList];
+}
+
+@end
+
 static void YMCTShowList(YTPlayerViewController *player, UIView *sender) {
     NSArray<YMCommentTimestamp *> *stamps = YMCTStampsForPlayer(player);
     if (stamps.count == 0) return;
-    UIAlertController *sheet = [UIAlertController alertControllerWithTitle:LOC(@"MY_TIMESTAMPS") message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     __weak YTPlayerViewController *weakPlayer = player;
-    for (YMCommentTimestamp *stamp in stamps) {
-        NSString *time = YMCTFormatTime(stamp.seconds);
-        NSString *title = stamp.label.length > 0 ? [NSString stringWithFormat:@"%@  %@", time, stamp.label] : time;
-        [sheet addAction:[UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            [weakPlayer seekToTime:(CGFloat)stamp.seconds];
-        }]];
+    YMTimestampListViewController *list = [[YMTimestampListViewController alloc] initWithStyle:UITableViewStylePlain];
+    list.stamps = stamps;
+    list.onSelect = ^(YMCommentTimestamp *stamp) {
+        [weakPlayer seekToTime:(CGFloat)stamp.seconds];
+    };
+    UINavigationController *navigation = [[UINavigationController alloc] initWithRootViewController:list];
+    navigation.modalPresentationStyle = UIModalPresentationPageSheet;
+    if (@available(iOS 15.0, *)) {
+        navigation.sheetPresentationController.detents = @[UISheetPresentationControllerDetent.mediumDetent, UISheetPresentationControllerDetent.largeDetent];
     }
-    [sheet addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL") style:UIAlertActionStyleCancel handler:nil]];
-    sheet.popoverPresentationController.sourceView = sender;
-    sheet.popoverPresentationController.sourceRect = sender.bounds;
 
     UIViewController *presenter = sender.window.rootViewController ?: player;
     while (presenter.presentedViewController) presenter = presenter.presentedViewController;
-    [presenter presentViewController:sheet animated:YES completion:nil];
+    [presenter presentViewController:navigation animated:YES completion:nil];
 }
 
 void YMCopyTimestampDebugInfo(void) {
