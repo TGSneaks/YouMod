@@ -1,10 +1,13 @@
 // OnlyMyComments.x
 // Keeps the comments panel but removes every comment not written by the handle set in settings.
+#import <objc/runtime.h>
 #import "Headers.h"
 
 static const NSInteger OMCMaxAttempts = 4;
 static const NSUInteger OMCDebugLimit = 8;
 static const NSUInteger OMCDebugTextLimit = 300;
+static const NSInteger OMCMaxCollapsedCells = 60;
+static const void *OMCCollapsedCountKey = &OMCCollapsedCountKey;
 
 static NSMutableArray<NSString *> *omcDebugEntries;
 
@@ -65,21 +68,40 @@ static void OMCRemoveCell(UIView *cell) {
     [node setNeedsLayout];
 }
 
-// Cell contents load after the cell appears, so unreadable cells are retried and then left visible.
+// Collapsed rows pull the next page into view, so each list stops collapsing at a limit. Rows past it stay invisible at full height, which stops the paging.
+static BOOL OMCCanCollapseCell(UIView *cell) {
+    UIView *list = cell.superview;
+    while (list != nil && ![list isKindOfClass:[UICollectionView class]]) {
+        list = list.superview;
+    }
+    if (!list) return YES;
+    NSInteger count = [objc_getAssociatedObject(list, OMCCollapsedCountKey) integerValue];
+    if (count >= OMCMaxCollapsedCells) return NO;
+    objc_setAssociatedObject(list, OMCCollapsedCountKey, @(count + 1), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    return YES;
+}
+
+// Cells start invisible. Cell contents load after the cell appears, so unreadable cells are retried and then shown.
 static void OMCFilterCell(UIView *cell, NSInteger attempt) {
     __weak UIView *weakCell = cell;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.15 * (attempt + 1) * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         UIView *strongCell = weakCell;
         NSString *handle = OMCHandle();
-        if (!strongCell || !handle || !IS_ENABLED(OnlyMyComments)) return;
+        if (!strongCell) return;
+        if (!handle || !IS_ENABLED(OnlyMyComments)) {
+            strongCell.alpha = 1;
+            return;
+        }
         NSString *text = OMCCellText(strongCell);
         if (text.length == 0) {
             if (attempt + 1 < OMCMaxAttempts) OMCFilterCell(strongCell, attempt + 1);
+            else strongCell.alpha = 1;
             return;
         }
         BOOL isMine = [text rangeOfString:handle options:NSCaseInsensitiveSearch].location != NSNotFound;
         OMCRecordDebugEntry(text, isMine);
-        if (!isMine) OMCRemoveCell(strongCell);
+        if (isMine) strongCell.alpha = 1;
+        else if (OMCCanCollapseCell(strongCell)) OMCRemoveCell(strongCell);
     });
 }
 
@@ -107,7 +129,8 @@ void YMCopyCommentDebugInfo(void) {
 %hook _ASDisplayView
 - (void)didMoveToWindow {
     %orig;
-    if (self.window && [self.accessibilityIdentifier isEqualToString:@"id.ui.comment_cell"] && IS_ENABLED(OnlyMyComments)) {
+    if (self.window && !self.hidden && [self.accessibilityIdentifier isEqualToString:@"id.ui.comment_cell"] && IS_ENABLED(OnlyMyComments) && OMCHandle()) {
+        self.alpha = 0;
         OMCFilterCell(self, 0);
     }
 }
