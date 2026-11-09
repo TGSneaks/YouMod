@@ -33,6 +33,7 @@ static const NSInteger TweakSection = 'ytmo';
 @end
 extern void YMPushSubSettings(NSString *title, NSArray<YMSettingsItem *> *items, id settingsVC, id parentResponder);
 extern void YMCopyTimestampDebugInfo(void);
+extern void YMCopyPlaylistSortDebugInfo(void);
 extern YMSettingsItem *YMToggle(NSString *title, NSString *subtitle, NSString *key);
 extern YMSettingsItem *YMSlider(NSString *title, NSString *subtitle, NSString *key, float min, float max, float step, float defaultValue);
 extern YMSettingsItem *YMPicker(NSString *title, NSString *subtitle, NSString *key, NSArray<NSString *> *options, NSInteger defaultValue);
@@ -326,6 +327,11 @@ static NSString *GetCacheSize() { // YTLite - @dayanch96
                 (void)vc;
                 YMCopyTimestampDebugInfo();
             }) visibleWhenBoolKey:CommentTimestamps],
+            YMToggle(YMLOC(@"PLAYLIST_SORT"), YMLOC(@"PLAYLIST_SORT_DESC"), PlaylistSortByViews),
+            [YMAction(YMLOC(@"COPY_PLAYLIST_SORT_DEBUG"), YMLOC(@"COPY_PLAYLIST_SORT_DEBUG_DESC"), ^(UIViewController *vc) {
+                (void)vc;
+                YMCopyPlaylistSortDebugInfo();
+            }) visibleWhenBoolKey:PlaylistSortByViews],
             YMPicker(YMLOC(@"DRC_AUDIO_OPTIONS"), YMLOC(@"DRC_AUDIO_OPTIONS_DESC"), AutoDRCAudioIndex, (@[YMLOC(@"DEFAULT"), YMLOC(@"ENABLED"), YMLOC(@"DISABLED")]), 0),
             YMToggle(YMLOC(@"REMOVE_VIDEO_LIKE_BUTTON"), YMLOC(@"REMOVE_VIDEO_LIKE_BUTTON_DESC"), RemoveVideoLikeButton),
             YMToggle(YMLOC(@"REMOVE_VIDEO_DISLIKE_BUTTON"), YMLOC(@"REMOVE_VIDEO_DISLIKE_BUTTON_DESC"), RemoveVideoDislikeButton),

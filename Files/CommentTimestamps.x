@@ -37,6 +37,10 @@ static NSString *YMCTAuthHeader(void) {
     }
 }
 
+NSString *YMCTCurrentAuthHeader(void) {
+    return YMCTAuthHeader();
+}
+
 static NSString *YMCTFormatTime(NSInteger seconds) {
     NSInteger hours = seconds / 3600;
     NSInteger minutes = (seconds % 3600) / 60;

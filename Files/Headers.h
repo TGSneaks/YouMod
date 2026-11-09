@@ -197,6 +197,7 @@
 #define HideCommentsSection @"YouModHideCommentsSection"
 #define HideCommentsPreview @"YouModHideCommentsPreview"
 #define CommentTimestamps @"YouModCommentTimestamps"
+#define PlaylistSortByViews @"YouModPlaylistSortByViews"
 #define LockSpeed @"YouModLockSpeed"
 #define SeekOnOverlay @"YouModSeekOnOverlay"
 #define AutoDRCAudioIndex @"YouModAutoDRCAudioIndex"

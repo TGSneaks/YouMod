@@ -340,6 +340,15 @@
 "COPY_TIMESTAMP_DEBUG_DESC" = "Copies what happened on the last video read.";
 "TIMESTAMPS_BUTTON" = "My timestamps";
 "MY_TIMESTAMPS" = "My timestamps";
+"PLAYLIST_SORT" = "Sort playlists by views";
+"PLAYLIST_SORT_DESC" = "Adds a sort button to playlist pages that lists every video by view count.";
+"PLAYLIST_SORT_MOST" = "Most viewed";
+"PLAYLIST_SORT_LEAST" = "Least viewed";
+"PLAYLIST_SORT_LOADING" = "Loading the playlist...";
+"PLAYLIST_SORT_PROGRESS" = "Loading the playlist... %lu videos so far";
+"PLAYLIST_SORT_EMPTY" = "No videos found in this playlist.";
+"COPY_PLAYLIST_SORT_DEBUG" = "Copy playlist sort debug info";
+"COPY_PLAYLIST_SORT_DEBUG_DESC" = "Copies what happened on the last playlist page.";
 "LOCK_SPEED" = "Lock speed";
 "LOCK_SPEED_DESC" = "Locks at adjusted speed by swiping down.";
 "SEEK_ON_OVERLAY" = "Seek on overlay";
