@@ -347,6 +347,8 @@
 "PLAYLIST_SORT_LOADING" = "Loading the playlist...";
 "PLAYLIST_SORT_PROGRESS" = "Loading the playlist... %lu videos so far";
 "PLAYLIST_SORT_EMPTY" = "No videos found in this playlist.";
+"PLAYLIST_SEARCH" = "Search this playlist";
+"PLAYLIST_SEARCH_EMPTY" = "No matching videos.";
 "COPY_PLAYLIST_SORT_DEBUG" = "Copy playlist sort debug info";
 "COPY_PLAYLIST_SORT_DEBUG_DESC" = "Copies what happened on the last playlist page.";
 "LOCK_SPEED" = "Lock speed";

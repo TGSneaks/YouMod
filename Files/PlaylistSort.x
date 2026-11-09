@@ -222,9 +222,11 @@ static NSString *YMPSFormatViews(long long views) {
     return [NSString stringWithFormat:@"%lld views", views];
 }
 
-@interface YMPlaylistSortViewController : UITableViewController
+@interface YMPlaylistSortViewController : UITableViewController <UISearchResultsUpdating>
 @property (nonatomic, copy) NSString *playlistID;
 @property (nonatomic, copy) NSArray<NSDictionary *> *videos;
+@property (nonatomic, copy) NSArray<NSDictionary *> *shownVideos;
+@property (nonatomic, copy) NSString *query;
 @property (nonatomic, copy) NSString *status;
 @property (nonatomic, assign) BOOL leastFirst;
 @end
@@ -239,6 +241,13 @@ static NSString *YMPSFormatViews(long long views) {
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"arrow.up.arrow.down"] style:UIBarButtonItemStylePlain target:self action:@selector(flipOrder)];
     self.tableView.rowHeight = UITableViewAutomaticDimension;
     self.tableView.estimatedRowHeight = 60;
+    UISearchController *search = [[UISearchController alloc] initWithSearchResultsController:nil];
+    search.searchResultsUpdater = self;
+    search.obscuresBackgroundDuringPresentation = NO;
+    search.searchBar.placeholder = LOC(@"PLAYLIST_SEARCH");
+    self.navigationItem.searchController = search;
+    self.navigationItem.hidesSearchBarWhenScrolling = NO;
+    self.definesPresentationContext = YES;
     self.status = LOC(@"PLAYLIST_SORT_LOADING");
     [self refreshTitle];
 
@@ -267,7 +276,26 @@ static NSString *YMPSFormatViews(long long views) {
         return ((left < right) == leastFirst) ? NSOrderedAscending : NSOrderedDescending;
     }];
     [self refreshTitle];
+    [self applyQuery];
+}
+
+// Rank numbers always come from the full sorted list, so a search keeps each video's real place.
+- (void)applyQuery {
+    NSString *query = [self.query stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    if (query.length == 0) {
+        self.shownVideos = self.videos;
+    } else {
+        NSPredicate *match = [NSPredicate predicateWithBlock:^BOOL(NSDictionary *video, NSDictionary *bindings) {
+            return [video[@"title"] localizedCaseInsensitiveContainsString:query];
+        }];
+        self.shownVideos = [self.videos filteredArrayUsingPredicate:match];
+    }
     [self.tableView reloadData];
+}
+
+- (void)updateSearchResultsForSearchController:(UISearchController *)searchController {
+    self.query = searchController.searchBar.text;
+    [self applyQuery];
 }
 
 - (void)flipOrder {
@@ -275,12 +303,19 @@ static NSString *YMPSFormatViews(long long views) {
     [self sortAndReload];
 }
 
+// The active search bar is presented on top of this list, so the whole sheet is dismissed from below it.
+- (void)closeListThen:(void (^)(void))completion {
+    UIViewController *presenter = self.navigationController.presentingViewController ?: self.presentingViewController;
+    [presenter dismissViewControllerAnimated:YES completion:completion];
+}
+
 - (void)closeList {
-    [self dismissViewControllerAnimated:YES completion:nil];
+    [self closeListThen:nil];
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return self.status ? 1 : self.videos.count;
+    if (self.status) return 1;
+    return self.shownVideos.count > 0 || self.query.length == 0 ? self.shownVideos.count : 1;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -292,8 +327,15 @@ static NSString *YMPSFormatViews(long long views) {
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
         return cell;
     }
-    NSDictionary *video = self.videos[indexPath.row];
-    cell.textLabel.text = [NSString stringWithFormat:@"%ld. %@", (long)indexPath.row + 1, video[@"title"]];
+    if (self.shownVideos.count == 0) {
+        cell.textLabel.text = LOC(@"PLAYLIST_SEARCH_EMPTY");
+        cell.detailTextLabel.text = nil;
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        return cell;
+    }
+    NSDictionary *video = self.shownVideos[indexPath.row];
+    NSUInteger rank = [self.videos indexOfObjectIdenticalTo:video] + 1;
+    cell.textLabel.text = [NSString stringWithFormat:@"%lu. %@", (unsigned long)rank, video[@"title"]];
     cell.detailTextLabel.text = YMPSFormatViews([video[@"views"] longLongValue]);
     cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
     cell.selectionStyle = UITableViewCellSelectionStyleDefault;
@@ -302,9 +344,9 @@ static NSString *YMPSFormatViews(long long views) {
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    if (self.status) return;
-    NSURL *url = [NSURL URLWithString:[@"youtube://" stringByAppendingString:self.videos[indexPath.row][@"id"]]];
-    [self dismissViewControllerAnimated:YES completion:^{
+    if (self.status || indexPath.row >= (NSInteger)self.shownVideos.count) return;
+    NSURL *url = [NSURL URLWithString:[@"youtube://" stringByAppendingString:self.shownVideos[indexPath.row][@"id"]]];
+    [self closeListThen:^{
         [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
     }];
 }
